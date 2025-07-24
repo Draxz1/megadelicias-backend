@@ -15,6 +15,11 @@ app.use(express.json());
 // Rutas
 const authRoutes = require('./routes/auth.routes');
 const platoRoutes = require('./routes/plato.routes'); // Asegúrate de que este archivo existe
+const userRoutes = require('./routes/user.routes');
+app.use('/api/usuarios', userRoutes);
+const contabilidadRoutes = require('./routes/contabilidad.routes');
+app.use('/api/contabilidad', contabilidadRoutes);
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/platos', platoRoutes);
