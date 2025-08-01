@@ -1,4 +1,5 @@
 const Plato = require('../models/plato.model');
+const pool = require('../db/connection');
 
 const create = async (req, res) => {
   try {

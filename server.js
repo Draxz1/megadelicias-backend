@@ -20,6 +20,11 @@ app.use('/api/usuarios', userRoutes);
 const contabilidadRoutes = require('./routes/contabilidad.routes');
 app.use('/api/contabilidad', contabilidadRoutes);
 
+const cajaRoutes = require('./routes/caja.routes');
+const meseroRoutes = require('./routes/mesero.routes');
+
+app.use('/api/caja', cajaRoutes);
+app.use('/api/mesero', meseroRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/platos', platoRoutes);
