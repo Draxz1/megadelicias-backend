@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const meseroController = require('../controllers/mesero.controller'); // asegúrate que este path sea correcto
+const auth = require('../middlewares/auth.middleware');
+const MeseroController = require('../controllers/mesero.controller');
 
-router.post('/orden', meseroController.crearOrden); // esta línea da error si `crearOrden` no existe o es undefined
+router.get('/platos', auth, MeseroController.obtenerPlatos);
+router.post('/ordenes', auth, MeseroController.crearOrden);
+router.get('/ordenes', auth, MeseroController.listarOrdenes);
 
 module.exports = router;

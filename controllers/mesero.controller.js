@@ -1,42 +1,53 @@
-const Pedido = require('../models/Pedido');
-const PedidoDetalle = require('../models/PedidoDetalle');
-const Mesa = require('../models/Mesa');
 const pool = require('../db/connection');
 
-exports.crearOrden = (req, res) => {
-  // tu lógica para la orden
-  res.json({ message: 'Orden registrada' });
-};
-
-exports.crearPedido = async (req, res) => {
+exports.obtenerPlatos = async (req, res) => {
   try {
-    const { mesa_id, mesero_id, detalles } = req.body;
-
-    const pedidoId = await Pedido.crear({ mesa_id, mesero_id });
-
-    for (const item of detalles) {
-      await PedidoDetalle.agregar({
-        pedido_id: pedidoId,
-        plato_id: item.plato_id,
-        cantidad: item.cantidad,
-        notas: item.notas || ''
-      });
-    }
-
-    await Mesa.actualizarEstado(mesa_id, 'ocupada');
-
-    res.status(201).json({ message: 'Pedido registrado exitosamente' });
+    const [rows] = await pool.query('SELECT * FROM platos');
+    res.json(rows);
   } catch (error) {
-    console.error('Error en crearPedido:', error);
-    res.status(500).json({ message: 'Error al registrar el pedido' });
+    console.error('Error al obtener platos:', error);
+    res.status(500).json({ message: 'Error interno' });
   }
 };
 
-exports.obtenerMesas = async (req, res) => {
+exports.crearOrden = async (req, res) => {
+  const { detalles } = req.body;
+  const usuario_id = req.user.id; // ✅ CORREGIDO
+
   try {
-    const mesas = await Mesa.listar();
-    res.json(mesas);
+    const [orden] = await pool.query('INSERT INTO ordenes (usuario_id) VALUES (?)', [usuario_id]);
+    const orden_id = orden.insertId;
+
+    for (const item of detalles) {
+      await pool.query(
+        'INSERT INTO orden_detalles (orden_id, plato_id, cantidad) VALUES (?, ?, ?)',
+        [orden_id, item.plato_id, item.cantidad]
+      );
+    }
+
+    res.status(201).json({ message: 'Orden creada exitosamente' });
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener las mesas' });
+    console.error('Error al crear orden:', error);
+    res.status(500).json({ message: 'Error interno' });
+  }
+};
+
+exports.listarOrdenes = async (req, res) => {
+  const usuario_id = req.user.id; // ✅ CORREGIDO
+  try {
+    const [ordenes] = await pool.query(
+      `SELECT o.id, o.estado, o.fecha, GROUP_CONCAT(p.nombre, ' x', od.cantidad SEPARATOR ', ') AS platos
+       FROM ordenes o
+       JOIN orden_detalles od ON o.id = od.orden_id
+       JOIN platos p ON od.plato_id = p.id
+       WHERE o.usuario_id = ?
+       GROUP BY o.id
+       ORDER BY o.fecha DESC`,
+      [usuario_id]
+    );
+    res.json(ordenes);
+  } catch (error) {
+    console.error('Error al listar órdenes:', error);
+    res.status(500).json({ message: 'Error interno' });
   }
 };
